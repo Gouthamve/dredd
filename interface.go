@@ -2,33 +2,38 @@ package dredd
 
 // Judge is the interface for the online Judge
 type Judge interface {
-	SetLimits(limits) error
+	SetLimits(Limits) error
 	Judge(file, inp, output string) (bool, error)
-}
-
-// Database is the database interface
-type Database interface {
-	GetProblem(string) (problem, error)
 }
 
 // Limits are the constraints on the execution
 type Limits struct {
-	memory int // Memory in MB
-	time   int // time in secs
+	Memory int `json:"memory,omitempty"` // Memory in MB
+	Time   int `json:"time,omitempty"`   // time in secs
 }
 
 // Problem is self-explanatory
 type Problem struct {
-	id        string
-	question  string
-	limits    limits
-	testcases []testcase
+	Lang      string     `json:"lang"`
+	Limits    Limits     `json:"limits,omitempty"`
+	Testcases []Testcase `json:"testcases"`
 }
 
 // Testcase is self-explanatory
 type Testcase struct {
-	inp      string
-	expected string
+	Inp      string `json:"inp"`
+	Expected string `json:"expected"`
+}
+
+// Result is the output of each testcase run
+type Result struct {
+	Ok       bool   `json:"ok,omitempty"`
+	Err      string `json:"err,omitempty"`
+	Exp      string `json:"exp"`
+	Got      string `json:"got,omitempty"`
+	ExitCode int    `json:"exitCode"`
+
+	Flag int `json:"flag"`
 }
 
 // Compiler interface is for the compilers
