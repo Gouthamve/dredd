@@ -9,7 +9,7 @@ import (
 	"github.com/juju/errors"
 )
 
-const (
+var (
 	// ErrCompileTimeout is compile timeout error
 	ErrCompileTimeout = errors.New("compile timeout")
 )
@@ -26,7 +26,7 @@ func (r Runner) Compile(lang, path string) (output string, err error) {
 	case "go":
 		err = compileGo(path, out)
 		if err != nil {
-			return "", errors.Annotate("Compilation failed")
+			return "", errors.Annotate(err, "Compilation failed")
 		}
 
 		return out, nil
@@ -44,19 +44,20 @@ func getTempFile(lang string) (string, error) {
 	return out.Name(), nil
 }
 
-func compileGo(path, output) error {
+func compileGo(path, output string) error {
+	// TODO: Refactor
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-o", output, path)
-	out, err := cmd.Output()
+	cmd := exec.CommandContext(ctx, "gocompile", path, output)
+	_, err := cmd.Output()
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return ErrCompileTimeout
 	}
 
 	if err != nil {
-		return errors.New("Compilation failed: %s", out)
+		return errors.Trace(err)
 	}
 
 	return nil
