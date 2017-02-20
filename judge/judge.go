@@ -1,7 +1,6 @@
 package judge
 
 import (
-	"fmt"
 	"strings"
 
 	sandbox "github.com/ggaaooppeenngg/libsandbox"
@@ -40,7 +39,7 @@ func (d *Dredd) Judge(file, inp, output string) (bool, error) {
 		Memory: int64(d.limits.Memory * 1024),
 		Time:   int64(d.limits.Time * 1000),
 	}
-	fmt.Println(c)
+
 	s, err := sandbox.NewStdSandbox(c)
 	if err != nil {
 		return false, errors.Annotate(err, "failed to create new sandbox")

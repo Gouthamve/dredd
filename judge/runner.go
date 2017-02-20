@@ -10,6 +10,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+// RunnerArgs encapsulates the arguments for Runner
+type RunnerArgs struct {
+	Problem  dredd.Problem `json:"problem"`
+	Filename string        `json:"filename"`
+}
+
 // Runner is the runner that uses Judge :P
 // TODO: Better desc
 type Runner struct {
@@ -21,16 +27,20 @@ type Runner struct {
 }
 
 // NewRunner is self-explanatory
-func NewRunner(p dredd.Problem, file string) (Runner, error) {
-	r := Runner{
-		j: &Dredd{
-			limits: p.Limits,
-		},
-		p:    p,
-		file: file,
+func NewRunner(ra RunnerArgs) (Runner, error) {
+	if err := validateArgs(ra); err != nil {
+		return Runner{}, errors.Trace(err)
 	}
 
-	lFile, err := downloadFile(file)
+	r := Runner{
+		j: &Dredd{
+			limits: ra.Problem.Limits,
+		},
+		p:    ra.Problem,
+		file: ra.Filename,
+	}
+
+	lFile, err := downloadFile(ra.Filename)
 	if err != nil {
 		return Runner{}, errors.Trace(err)
 	}
@@ -116,4 +126,30 @@ func newResult(ok bool, err string, exp string, got string, code int, f int) dre
 		ExitCode: code,
 		Flag:     f,
 	}
+}
+
+func validateArgs(a RunnerArgs) error {
+	// validate problem
+	if a.Problem.Lang == "" {
+		return errors.New("Lang is a mandatory argument")
+	}
+
+	if len(a.Problem.Testcases) == 0 {
+		return errors.New("Atleast 1 testcase has to be provided")
+	}
+
+	if a.Problem.Limits.Memory == 0 {
+		return errors.New("Memory limit should be non-zero")
+	}
+
+	if a.Problem.Limits.Time == 0 {
+		return errors.New("Time limit should be non-zero")
+	}
+
+	// validate file
+	if a.Filename == "" {
+		return errors.New("Remote filename is a mandatory argument")
+	}
+
+	return nil
 }

@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gouthamve/dredd"
 	"github.com/gouthamve/dredd/judge"
 	"github.com/juju/errors"
 	"github.com/spf13/viper"
@@ -19,67 +18,26 @@ func main() {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 
-	if len(os.Args) != 2 {
-		log.Fatalln("Usage: dredd <args>")
+	ra := judge.RunnerArgs{}
+	if err := json.NewDecoder(os.Stdin).Decode(&ra); err != nil {
+		log.Fatalln(errors.ErrorStack(errors.Trace(err)))
 	}
 
-	a := args{}
-	json.Unmarshal([]byte(os.Args[1]), &a)
-
-	if err := validateArgs(a); err != nil {
-		log.Fatalln(errors.ErrorStack(err))
-	}
-
-	r, err := judge.NewRunner(a.Problem, a.Filename)
+	r, err := judge.NewRunner(ra)
 	if err != nil {
-		log.Fatalln(errors.ErrorStack(err))
+		log.Fatalln(errors.ErrorStack(errors.Trace(err)))
+
 	}
 
 	res, err := r.Run()
 	if err != nil {
-		log.Fatalln(errors.ErrorStack(err))
+		log.Fatalln(errors.ErrorStack(errors.Trace(err)))
 	}
 
 	byt, err := json.Marshal(res)
 	if err != nil {
-		log.Fatalln(errors.Trace(err))
+		log.Fatalln(errors.ErrorStack(errors.Trace(err)))
 	}
 
 	fmt.Println(string(byt))
-}
-
-type args struct {
-	Problem  dredd.Problem `json:"problem"`
-	Filename string        `json:"filename"`
-}
-
-func validateArgs(a args) error {
-	// validate problem
-	if a.Problem.Lang == "" {
-		return errors.New("Lang is a mandatory argument")
-	}
-
-	if len(a.Problem.Testcases) == 0 {
-		return errors.New("Atleast 1 testcase has to be provided")
-	}
-
-	if a.Problem.Limits.Memory == 0 {
-		return errors.New("Memory limit should be non-zero")
-	}
-
-	if a.Problem.Limits.Time == 0 {
-		return errors.New("Time limit should be non-zero")
-	}
-
-	// validate file
-	if a.Filename == "" {
-		return errors.New("Remote filename is a mandatory argument")
-	}
-
-	return nil
-}
-
-func validateTestcase(t dredd.Testcase) error {
-
-	return nil
 }
